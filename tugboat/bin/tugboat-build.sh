@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -ex
 
-cd ${TUGBOAT_ROOT}/web
+cd web
 drush site-install standard -y
 drush en devel -y
 
