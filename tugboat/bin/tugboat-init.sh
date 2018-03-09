@@ -57,9 +57,7 @@ cp tugboat/assets/settings.local.php web/sites/default
 # Now run tugboat-build to create a new site.
 make tugboat-build
 
-# Ensure drush is running
-cd /usr/local/src/drush
-composer install
-
 # Clean up after ourselves.
 rm -Rf /tmp/*
+
+echo $TUGBOAT_URL
