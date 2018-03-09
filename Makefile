@@ -37,13 +37,15 @@ packages:
 	a2enmod php7.1
 	a2dismod php7.0
 	composer install --no-ansi --no-interaction
- 
 	ln -sf ${TUGBOAT_ROOT}/web /var/www/html
-
 	apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 	echo "export PATH=\"${TUGBOAT_ROOT}/vendor/bin:${PATH}\"" >> /etc/profile.d/container_environment.sh
 	. /etc/profile.d/container_environment.sh
-
+	# Create the files directory.
+	mkdir -p web/sites/default/files
+	chgrp -R www-data web/sites/default
+	chmod -R g+w web/sites/default/files
+	chmod 2775 web/sites/default/files
 
 drupalconfig:
 	cp ${TUGBOAT_ROOT}/dist/settings.php /var/www/html/sites/default/settings.php
