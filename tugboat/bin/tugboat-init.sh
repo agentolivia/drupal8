@@ -42,20 +42,6 @@ apt-get install -y \
 # Set up apache modules.
 a2enmod headers
 
-# Create a private and public key using base64 encoded environment variables.
-# To start, we need the DR_PRIVATE_KEY environment variable set.
-if [[ -z $DR_PRIVATE_KEY ]]; then
-  echo "You must have the DR_PRIVATE_KEY environment variable set." 1>&2
-  exit 23
-fi
-# Decode the private key and save to disk.
-set +x
-echo $DR_PRIVATE_KEY | base64 --decode > /root/.ssh/dr_id_rsa
-set -x
-chmod 600 /root/.ssh/dr_id_rsa
-# Regenerate the public key.
-ssh-keygen -y -f /root/.ssh/dr_id_rsa > /root/.ssh/dr_id_rsa.pub
-
 # Create the databases and import the sql file.
 mysql --user=tugboat --password=tugboat --host=mysql \
   -e 'create database drupal8;'
