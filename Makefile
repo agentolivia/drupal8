@@ -1,31 +1,79 @@
-#
-# Makefile for dr.lullabot.com.
-#
-# Includes commands for Tugboat. Feel free to expand with custom project
-# commands.
-#
+packages:
+	apt-get install -y python-software-properties software-properties-common
+	add-apt-repository -y ppa:ondrej/php
+	apt-get install -y \
+		php7.1 \
+		php7.1-mbstring \
+		php7.1-mysql \
+		php7.1-xml \
+		php7.1-zip \
+		php7.1-bcmath \
+		php7.1-bz2 \
+		php7.1-cli \
+		php7.1-common \
+		php7.1-curl \
+		php7.1-dev \
+		php7.1-gd \
+		php7.1-intl \
+		php7.1-json \
+		php7.1-mbstring \
+		php7.1-mcrypt \
+		php7.1-mysql \
+		php7.1-opcache \
+		php7.1-phpdbg \
+		php7.1-pspell \
+		php7.1-readline \
+		php7.1-recode \
+		php7.1-soap \
+		php7.1-sqlite3 \
+		php7.1-tidy \
+		php7.1-xml \
+		php7.1-xsl \
+		php7.1-zip \
+		libapache2-mod-php7.1 \
+		mysql-client \
+		rsync
+	a2enmod php7.1
+	a2dismod php7.0
+	composer install --no-ansi --no-interaction
+ 
+	ln -sf ${TUGBOAT_ROOT}/web /var/www/html
 
-# This is called during "tugboat init", after all of the service containers have
-# been built, and the git repo has been cloned. This can be used for things like
-# installing additional libraries that don't come built-in to the tugboat
-# containers.
-tugboat-init:
-	tugboat/bin/tugboat-init.sh
+	apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+	echo "export PATH=\"${TUGBOAT_ROOT}/vendor/bin:${PATH}\"" >> /etc/profile.d/container_environment.sh
+	. /etc/profile.d/container_environment.sh
 
-# When a Tugboat Preview is being built or rebuilt, this command will be called
-# immediately following the git merge. This script can execute any deployment
-# scripts that might be required on your project.
-tugboat-build:
-	tugboat/bin/tugboat-build.sh
 
-# This command is used to update the Base Preview that all Previews are built
-# from. This can be used to synchronize any data or other assets from a
-# production or staging source, so that your Previews roughly match prod.
-tugboat-update:
-	tugboat/bin/tugboat-update.sh
+drupalconfig:
+	cp ${TUGBOAT_ROOT}/dist/settings.php /var/www/html/sites/default/settings.php
+	cp ${TUGBOAT_ROOT}/dist/tugboat.settings.php /var/www/html/sites/default/settings.local.php
+	echo "\$$settings['hash_salt'] = '$$(openssl rand -hex 32)';" >> /var/www/html/sites/default/settings.local.php
 
-# This is called by Tugboat to run a project's test suite. It is used during
-# "tugboat test", if the "testall" config option is set to true, and if --test
-# is specified during "tugboat build".
-tugboat-test:
-	tugboat/bin/tugboat-test.sh
+createdb:
+	mysql -h mysql -u tugboat -ptugboat -e "create database demo;"
+
+createsite:
+	cd ${TUGBOAT_ROOT}/web
+	drush site-install standard -y
+	#drush en devel -y
+	
+importdb:
+	curl -L "https://www.dropbox.com/s/ji41n0q14qgky9a/demo-drupal8-database.sql.gz?dl=0" > /tmp/database.sql.gz
+	zcat /tmp/database.sql.gz | mysql -h mysql -u tugboat -ptugboat demo
+
+importfiles:
+	curl -L "https://www.dropbox.com/s/jveuu586eb49kho/demo-drupal8-files.tar.gz?dl=0" > /tmp/files.tar.gz
+	tar -C /tmp -zxf /tmp/files.tar.gz
+	rsync -av --delete /tmp/files/ /var/www/html/sites/default/files/
+
+build:
+	drush -r /var/www/html cache-rebuild
+	drush -r /var/www/html updb -y
+
+cleanup:
+	apt-get clean
+	rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+tugboat-init: packages createdb drupalconfig createsite build cleanup
+tugboat-update: createsite build cleanup
+tugboat-build: build
