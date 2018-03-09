@@ -55,7 +55,7 @@ createdb:
 
 createsite:
 	cd ${TUGBOAT_ROOT}/web
-	drush site-install standard -y
+	drush site-install demo_umami --account-mail=admin@example.com --account-name=admin --account-pass=admin --locale=en --site-name="Demo Drupal 8" --site-mail=admin@example.com -y
 	#drush en devel -y
 	
 importdb:
