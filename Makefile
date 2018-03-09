@@ -1,38 +1,31 @@
-packages:
-	apt-get update
-	apt-get install -y mysql-client rsync wget
-	# Install drush-launcher. This assumes you are using composer to install
-	# your desired version of Drush.
-	wget -O /usr/local/bin/drush https://github.com/drush-ops/drush-launcher/releases/download/0.5.1/drush.phar
-	chmod +x /usr/local/bin/drush
-	composer install
-	ln -sf ${TUGBOAT_ROOT}/web /var/www/html
+#
+# Makefile for dr.lullabot.com.
+#
+# Includes commands for Tugboat. Feel free to expand with custom project
+# commands.
+#
 
+# This is called during "tugboat init", after all of the service containers have
+# been built, and the git repo has been cloned. This can be used for things like
+# installing additional libraries that don't come built-in to the tugboat
+# containers.
+tugboat-init:
+	tugboat/bin/tugboat-init.sh
 
-drupalconfig:
-	cp ${TUGBOAT_ROOT}/dist/settings.php /var/www/html/sites/default/settings.php
-	cp ${TUGBOAT_ROOT}/dist/tugboat.settings.php /var/www/html/sites/default/settings.local.php
-	echo "\$$settings['hash_salt'] = '$$(openssl rand -hex 32)';" >> /var/www/html/sites/default/settings.local.php
+# When a Tugboat Preview is being built or rebuilt, this command will be called
+# immediately following the git merge. This script can execute any deployment
+# scripts that might be required on your project.
+tugboat-build:
+	tugboat/bin/tugboat-build.sh
 
-createdb:
-	mysql -h mysql -u tugboat -ptugboat -e "create database demo;"
+# This command is used to update the Base Preview that all Previews are built
+# from. This can be used to synchronize any data or other assets from a
+# production or staging source, so that your Previews roughly match prod.
+tugboat-update:
+	tugboat/bin/tugboat-update.sh
 
-importdb:
-	curl -L "https://www.dropbox.com/s/ji41n0q14qgky9a/demo-drupal8-database.sql.gz?dl=0" > /tmp/database.sql.gz
-	zcat /tmp/database.sql.gz | mysql -h mysql -u tugboat -ptugboat demo
-
-importfiles:
-	curl -L "https://www.dropbox.com/s/jveuu586eb49kho/demo-drupal8-files.tar.gz?dl=0" > /tmp/files.tar.gz
-	tar -C /tmp -zxf /tmp/files.tar.gz
-	rsync -av --delete /tmp/files/ /var/www/html/sites/default/files/
-
-build:
-	drush -r /var/www/html cache-rebuild
-
-cleanup:
-	apt-get clean
-	rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-
-tugboat-init: packages createdb drupalconfig importdb importfiles build cleanup
-tugboat-update: importdb importfiles build cleanup
-tugboat-build: build
+# This is called by Tugboat to run a project's test suite. It is used during
+# "tugboat test", if the "testall" config option is set to true, and if --test
+# is specified during "tugboat build".
+tugboat-test:
+	tugboat/bin/tugboat-test.sh
