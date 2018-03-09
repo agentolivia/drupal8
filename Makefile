@@ -1,6 +1,7 @@
 packages:
 	apt-get install -y python-software-properties software-properties-common
 	add-apt-repository -y ppa:ondrej/php
+	apt-get update
 	apt-get install -y \
 		php7.1 \
 		php7.1-mbstring \
