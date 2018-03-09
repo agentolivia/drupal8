@@ -9,7 +9,8 @@
 set -ex
 
 # Change the webroot
-ln -sf /var/lib/tugboat/web /var/www/html
+ln -sf ${TUGBOAT_ROOT}/web /var/www/html
+
 
 # Install some packages.
 #LC_ALL=C.UTF-8 add-apt-repository ppa:ondrej/php -y
