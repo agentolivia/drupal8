@@ -41,7 +41,7 @@ apt-get install -y \
 # Set up apache modules.
 a2enmod headers
 
-# Create the databases and import the sql file.
+# Create the database.
 mysql --user=tugboat --password=tugboat --host=mysql \
   -e 'create database drupal8;'
 
